@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BlueOceanTrips QR Scanner</title>
+    <title>BlueOceanTrips All-in-One Scanner & Generator</title>
     <style>
         :root {
             --background: #f8fafc;
@@ -17,91 +17,161 @@
             --destructive: #ef4444;
             --success: #22c55e;
             --radius: 0.5rem;
+            --input: #e2e8f0;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background-color: var(--background);
             color: var(--foreground);
             margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
             padding: 1rem;
-            min-height: 100vh;
         }
         .container {
             width: 100%;
-            max-width: 500px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .card {
             background-color: var(--card);
             border: 1px solid var(--border);
             border-radius: var(--radius);
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            margin-bottom: 2rem;
             overflow: hidden;
         }
-        .header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border);
-        }
-        .header h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin: 0;
-            color: var(--card-foreground);
-        }
-        .header p {
-            margin: 0.25rem 0 0;
-            color: var(--muted-foreground);
-            font-size: 0.875rem;
-        }
-        .content {
-            padding: 1.5rem;
-        }
-        #qr-reader {
+        .card-header { padding: 1.5rem; border-bottom: 1px solid var(--border); }
+        .card-header h1 { font-size: 1.5rem; font-weight: 600; margin: 0; color: var(--card-foreground); }
+        .card-header p { margin: 0.25rem 0 0; color: var(--muted-foreground); font-size: 0.875rem; }
+        .card-content { padding: 1.5rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; font-size: 0.875rem; }
+        .form-group input, .form-group textarea {
             width: 100%;
-            border-radius: var(--radius);
-            border: 1px solid var(--border);
-        }
-        #qr-reader-results {
-            margin-top: 1rem;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--input);
+            border-radius: calc(var(--radius) - 2px);
+            background-color: var(--background);
             font-size: 0.875rem;
         }
-        .toast {
-            padding: 1rem;
-            margin-top: 1rem;
-            border-radius: var(--radius);
-            text-align: center;
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem 1rem;
+            border-radius: calc(var(--radius) - 2px);
             font-weight: 500;
-            display: none;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.2s;
         }
-        .toast.success {
-            background-color: var(--success);
-            color: white;
+        .btn-primary { background-color: var(--primary); color: var(--primary-foreground); width: 100%; }
+        .btn-primary:hover { background-color: #334155; }
+        .btn-secondary { background-color: #e2e8f0; color: var(--primary); }
+        .btn-secondary:hover { background-color: #cbd5e1; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        #qr-reader { width: 100%; border-radius: var(--radius); border: 1px solid var(--border); }
+        #toast { padding: 1rem; margin-top: 1rem; border-radius: var(--radius); text-align: center; font-weight: 500; display: none; }
+        .toast.success { background-color: var(--success); color: white; }
+        .toast.error { background-color: var(--destructive); color: white; }
+        .footer { font-size: 0.75rem; color: var(--muted-foreground); text-align: center; padding: 1rem; border-top: 1px solid var(--border); background-color: #f8fafc; }
+
+        /* Ticket Card Styles */
+        #ticket-output-area { margin-top: 2rem; }
+        .ticket-card-wrapper { display: flex; justify-content: center; }
+        .ticket-card {
+            width: 350px;
+            aspect-ratio: 9 / 16;
+            background-color: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            font-family: sans-serif;
         }
-        .toast.error {
-            background-color: var(--destructive);
-            color: white;
-        }
-        .footer {
-            font-size: 0.75rem;
-            color: var(--muted-foreground);
-            text-align: center;
-            padding: 1rem;
-            border-top: 1px solid var(--border);
-            background-color: #f8fafc;
-        }
+        .ticket-header { text-align: center; margin-bottom: 1rem; }
+        .ticket-header img { max-width: 120px; margin: 0 auto; }
+        .ticket-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 1rem;}
+        .ticket-content .label { font-size: 0.75rem; color: var(--muted-foreground); }
+        .ticket-content .event-name { font-size: 1.25rem; font-weight: bold; color: var(--card-foreground); }
+        .ticket-content .qr-image-wrapper { background-color: white; padding: 0.5rem; border-radius: var(--radius); box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); margin: 1rem 0; }
+        .ticket-content .attendee-name { font-size: 1.5rem; font-weight: bold; }
+        .ticket-footer { border-top: 1px dashed var(--border); padding-top: 1rem; text-align: center; font-size: 0.75rem; color: var(--muted-foreground); }
+
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div class="header">
-            <h1>QR Code Scanner</h1>
-            <p>Scan tickets to record attendance.</p>
+        <!-- Generator Section -->
+        <div class="card">
+            <div class="card-header">
+                <h1>Ticket Generator</h1>
+                <p>Fill in the details to create an event ticket.</p>
+            </div>
+            <div class="card-content">
+                <div class="form-group">
+                    <label for="event-name">Event Name</label>
+                    <input type="text" id="event-name" placeholder="e.g., Annual Tech Conference">
+                </div>
+                <div class="form-group">
+                    <label for="attendee-name">Attendee Name</label>
+                    <input type="text" id="attendee-name" placeholder="e.g., John Doe">
+                </div>
+                 <div class="form-group">
+                    <label for="company-logo">Company Logo (Optional)</label>
+                    <input type="file" id="company-logo" accept="image/*">
+                </div>
+                <button id="generate-btn" class="btn btn-primary">Generate Ticket</button>
+            </div>
         </div>
-        <div class="content">
-            <div id="qr-reader"></div>
-            <div id="toast" class="toast"></div>
+
+        <!-- Ticket Display -->
+        <div id="ticket-output-area" style="display: none;">
+             <div class="ticket-card-wrapper">
+                <div id="ticket-card" class="ticket-card">
+                    <div class="ticket-header">
+                        <img id="ticket-logo-img" src="https://res.cloudinary.com/dy2hxcyaf/image/upload/v1758305428/Artboard_1bot_logo_2_zwfw2t.png" alt="Company Logo">
+                    </div>
+                    <div class="ticket-content">
+                        <div>
+                            <p class="label">EVENT</p>
+                            <h2 id="ticket-event-name" class="event-name"></h2>
+                        </div>
+                        <div class="qr-image-wrapper">
+                            <img id="ticket-qr-img" src="" alt="QR Code">
+                        </div>
+                         <div>
+                            <p class="label">ATTENDEE</p>
+                            <p id="ticket-attendee-name" class="attendee-name"></p>
+                        </div>
+                    </div>
+                    <div class="ticket-footer">
+                         <p>For more enquiries call or WhatsApp: 08158768689</p>
+                    </div>
+                </div>
+             </div>
+             <div style="text-align: center; margin-top: 1rem;">
+                <button id="save-btn" class="btn btn-secondary" disabled>Save Ticket as Image</button>
+             </div>
         </div>
+
+
+        <!-- Scanner Section -->
+        <div class="card">
+            <div class="card-header">
+                <h1>QR Code Scanner</h1>
+                <p>Scan tickets to record attendance.</p>
+            </div>
+            <div class="card-content">
+                <div id="qr-reader"></div>
+                <div id="toast" class="toast"></div>
+                 <div id="error-message" style="display: none; color:red; font-weight:bold; text-align:center; margin-top: 1rem;"></div>
+            </div>
+        </div>
+
         <div class="footer">
             BlueOceanTrips Event Manager
         </div>
@@ -114,22 +184,102 @@
     <!-- QR Scanner Library -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
+    <!-- Ticket Generation Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.min.js"></script>
+
     <script>
         // =================================================================================
         // IMPORTANT: CONFIGURE YOUR FIREBASE KEYS AND STAFF NAME HERE
         // =================================================================================
         // Your Firebase configuration has been pre-filled.
-        const firebaseConfig = {"apiKey":"your-api-key","authDomain":"your-auth-domain","projectId":"your-project-id","storageBucket":"your-storage-bucket","messagingSenderId":"your-messaging-sender-id","appId":"your-app-id"};
+        const firebaseConfig = {
+          "apiKey": "your-api-key",
+          "authDomain": "your-auth-domain",
+          "projectId": "your-project-id",
+          "storageBucket": "your-storage-bucket",
+          "messagingSenderId": "your-messaging-sender-id",
+          "appId": "your-app-id"
+        };
 
         // Set the name of the staff member operating this scanner.
         // This name will be logged with each scan.
         const SCANNER_OPERATOR_NAME = "PUT_STAFF_NAME_HERE"; 
         // =================================================================================
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        let db;
 
+        // --- TICKET GENERATOR ---
+        const eventNameInput = document.getElementById('event-name');
+        const attendeeNameInput = document.getElementById('attendee-name');
+        const generateBtn = document.getElementById('generate-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const ticketOutputArea = document.getElementById('ticket-output-area');
+        const companyLogoInput = document.getElementById('company-logo');
+
+        companyLogoInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    document.getElementById('ticket-logo-img').src = event.target.result;
+                }
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+
+        generateBtn.addEventListener('click', () => {
+            const eventName = eventNameInput.value.trim();
+            const attendeeName = attendeeNameInput.value.trim();
+
+            if (!eventName || !attendeeName) {
+                alert('Please fill in both Event Name and Attendee Name.');
+                return;
+            }
+
+            const eventId = `${eventName.replace(/\s/g, '')}-${Date.now()}`;
+            const attendeeId = `${eventId}-${attendeeName.replace(/\s/g, '')}`;
+            
+            const checkinQrData = JSON.stringify({
+                name: attendeeName,
+                event: eventName,
+                id: attendeeId,
+            });
+
+            const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(checkinQrData)}`;
+
+            // Update ticket display
+            document.getElementById('ticket-event-name').textContent = eventName;
+            document.getElementById('ticket-attendee-name').textContent = attendeeName;
+            document.getElementById('ticket-qr-img').src = qrImageUrl;
+            
+            ticketOutputArea.style.display = 'block';
+            saveBtn.disabled = false;
+        });
+        
+        saveBtn.addEventListener('click', async () => {
+            const ticketNode = document.getElementById('ticket-card');
+            const attendeeName = document.getElementById('attendee-name').value.trim().replace(/\s/g, '_');
+            const eventName = document.getElementById('event-name').value.trim().replace(/\s/g, '_');
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+
+            try {
+                const blob = await htmlToImage.toBlob(ticketNode, { cacheBust: true });
+                if (blob) {
+                    saveAs(blob, `${eventName}_${attendeeName}_ticket.png`);
+                }
+            } catch (error) {
+                console.error('oops, something went wrong!', error);
+                alert('Could not save image. Please try again.');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save Ticket as Image';
+            }
+        });
+
+
+        // --- SCANNER ---
         const toastElement = document.getElementById('toast');
         let toastTimeout;
 
@@ -181,10 +331,23 @@
         }
         
         document.addEventListener('DOMContentLoaded', (event) => {
-            if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "YOUR_API_KEY_HERE") {
-                 document.getElementById('qr-reader').innerHTML = '<p style="color:red; font-weight:bold; text-align:center;">ERROR: Firebase is not configured. Please edit this HTML file and add your API keys.</p>';
+            const errorMessageDiv = document.getElementById('error-message');
+            if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes("YOUR_API_KEY")) {
+                 errorMessageDiv.innerHTML = 'ERROR: Firebase is not configured. Please edit this HTML file and add your API keys.';
+                 errorMessageDiv.style.display = 'block';
                  return;
             }
+
+            try {
+                // Initialize Firebase
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+            } catch (e) {
+                 errorMessageDiv.innerHTML = `ERROR: Firebase initialization failed. Please check your API keys. Details: ${e.message}`;
+                 errorMessageDiv.style.display = 'block';
+                 return;
+            }
+
 
             if (!SCANNER_OPERATOR_NAME || SCANNER_OPERATOR_NAME === "PUT_STAFF_NAME_HERE") {
                  showToast('Scanner operator name is not set!', 'error');
