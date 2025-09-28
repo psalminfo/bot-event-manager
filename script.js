@@ -21,8 +21,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- Auth Functions (Auth.html) ---
 function setupAuthForms() {
-    // ... (Your existing login/signup form logic)
-    // IMPORTANT: Sign-up still creates a user with 'staff' role
+    const loginForm = document.getElementById('login-form');
+    const signupForm = document.getElementById('signup-form');
+    const showSignupLink = document.getElementById('show-signup');
+    const showLoginLink = document.getElementById('show-login');
+    const loginCard = document.getElementById('login-card');
+    const signupCard = document.getElementById('signup-card');
+    const loginError = document.getElementById('login-error');
+    const signupError = document.getElementById('signup-error');
+
+    showSignupLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        loginCard.style.display = 'none';
+        signupCard.style.display = 'block';
+    });
+
+    showLoginLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        signupCard.style.display = 'none';
+        loginCard.style.display = 'block';
+    });
+
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = e.target.querySelector('#login-email').value;
+        const password = e.target.querySelector('#login-password').value;
+        try {
+            await auth.signInWithEmailAndPassword(email, password);
+            window.location.href = 'staff-portal.html';
+        } catch (error) {
+            loginError.textContent = error.message;
+            loginError.style.display = 'block';
+        }
+    });
+
+    signupForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = e.target.querySelector('#signup-name').value;
+        const email = e.target.querySelector('#signup-email').value;
+        const password = e.target.querySelector('#signup-password').value;
+        try {
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            await db.collection('users').doc(userCredential.user.uid).set({
+                name: name,
+                email: email,
+                role: 'staff' 
+            });
+            window.location.href = 'staff-portal.html';
+        } catch (error) {
+            signupError.textContent = error.message;
+            signupError.style.display = 'block';
+        }
+    });
 }
 
 // --- Staff Portal Functions (staff-portal.html) ---
@@ -79,11 +129,94 @@ function initializeAdminPortal() {
 
     // Ticket Generator logic
     const form = document.getElementById('ticket-generator-form');
+    const generatedTicketsGrid = document.querySelector('.generated-tickets-grid');
+    const downloadBtnContainer = document.getElementById('download-btn-container');
+
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        generatedTicketsGrid.innerHTML = '';
+        downloadBtnContainer.style.display = 'none';
+
         const eventName = document.getElementById('event-name').value;
-        const attendeeNames = document.getElementById('attendee-names').value.split(',').map(name => name.trim());
-        generateTickets(eventName, attendeeNames);
+        const attendeeNames = document.getElementById('attendee-names').value.split(',').map(name => name.trim()).filter(name => name);
+        const instagramLink = document.getElementById('instagram-link').value;
+        const companyLogoFile = document.getElementById('company-logo').files[0];
+        const sponsorTitle = document.getElementById('sponsor-title').value || 'Sponsored By';
+        const sponsorLogosFiles = document.getElementById('sponsor-logos').files;
+
+        const companyLogoUrl = companyLogoFile ? URL.createObjectURL(companyLogoFile) : 'https://res.cloudinary.com/dy2hxcyaf/image/upload/v1758305428/Artboard_1bot_logo_2_zwfw2t.png';
+        const sponsorLogosUrls = Array.from(sponsorLogosFiles).map(file => URL.createObjectURL(file));
+
+        const ticketsToZip = [];
+
+        // Save each attendee to Firestore and generate the ticket
+        for (const name of attendeeNames) {
+            await db.collection('attendees').doc(name.toLowerCase().replace(/\s/g, '_')).set({
+                name: name,
+                checkedIn: false
+            });
+
+            const ticketEl = document.getElementById('ticket-template').cloneNode(true);
+            ticketEl.removeAttribute('id');
+            ticketEl.style.display = 'block';
+            
+            // Populate ticket with data
+            ticketEl.querySelector('.event-name').textContent = eventName.toUpperCase();
+            ticketEl.querySelector('.attendee-name').textContent = name.toUpperCase();
+            ticketEl.querySelector('.ticket-logo').src = companyLogoUrl;
+
+            // Generate QR Code with attendee's name
+            const qrContainer = ticketEl.querySelector('.qr-code-container');
+            new QRCode(qrContainer, {
+                text: name,
+                width: 128,
+                height: 128,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            
+            // Add sponsor section
+            const sponsorTitleEl = ticketEl.querySelector('.sponsor-title');
+            if (sponsorLogosFiles.length > 0) {
+                sponsorTitleEl.textContent = sponsorTitle;
+                const sponsorLogosContainer = ticketEl.querySelector('.sponsor-logos');
+                sponsorLogosUrls.forEach(url => {
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.className = 'sponsor-logo-img';
+                    sponsorLogosContainer.appendChild(img);
+                });
+            } else {
+                sponsorTitleEl.style.display = 'none';
+            }
+
+            // Add Instagram link
+            const contactInfoEl = ticketEl.querySelector('.contact-info');
+            if (instagramLink) {
+                contactInfoEl.textContent = `Follow us on Instagram: ${instagramLink}`;
+            } else {
+                contactInfoEl.textContent = 'For more enquiries call or WhatsApp: 08158768689';
+            }
+
+            generatedTicketsGrid.appendChild(ticketEl);
+            ticketsToZip.push({ element: ticketEl, name: name });
+        }
+
+        if (ticketsToZip.length > 0) {
+            downloadBtnContainer.style.display = 'block';
+        }
+
+        document.getElementById('download-all-btn').onclick = async () => {
+            const zip = new JSZip();
+            for (const ticket of ticketsToZip) {
+                const dataUrl = await htmlToImage.toPng(ticket.element);
+                const fileName = `${eventName.replace(/\s/g, '_')}_${ticket.name.replace(/\s/g, '_')}.png`;
+                zip.file(fileName, dataUrl.split('base64,')[1], { base64: true });
+            }
+            zip.generateAsync({ type: 'blob' }).then(content => saveAs(content, `${eventName.replace(/\s/g, '_')}_tickets.zip`));
+        };
     });
 
     // Admin Scanner Logic
@@ -117,56 +250,12 @@ async function checkInAttendee(attendeeName, scannerId) {
         showToast(`Error: Attendee ${attendeeName} not found.`, 'error');
     }
 }
-
-async function generateTickets(eventName, attendeeNames) {
-    const ticketsToZip = [];
-    const generatedTicketsGrid = document.querySelector('.generated-tickets-grid');
-    generatedTicketsGrid.innerHTML = '';
-    const downloadBtnContainer = document.getElementById('download-btn-container');
-    
-    // Create new documents for each attendee and generate tickets
-    for (const name of attendeeNames) {
-        await db.collection('attendees').doc(name.toLowerCase().replace(/\s/g, '_')).set({
-            name: name,
-            checkedIn: false
-        });
-
-        const ticketEl = document.getElementById('ticket-template').cloneNode(true);
-        ticketEl.removeAttribute('id');
-        ticketEl.style.display = 'block';
-        ticketEl.querySelector('.event-name').textContent = eventName.toUpperCase();
-        ticketEl.querySelector('.attendee-name').textContent = name.toUpperCase();
-
-        const qrContainer = ticketEl.querySelector('.qr-code-container');
-        new QRCode(qrContainer, { text: name, width: 128, height: 128, correctLevel: QRCode.CorrectLevel.H });
-
-        generatedTicketsGrid.appendChild(ticketEl);
-        ticketsToZip.push({ element: ticketEl, name: name });
-    }
-    
-    downloadBtnContainer.style.display = 'block';
-    document.getElementById('download-all-btn').onclick = async () => {
-        const zip = new JSZip();
-        for (const ticket of ticketsToZip) {
-            const dataUrl = await htmlToImage.toPng(ticket.element);
-            const fileName = `${eventName.replace(/\s/g, '_')}_${ticket.name.replace(/\s/g, '_')}.png`;
-            zip.file(fileName, dataUrl.split('base64,')[1], { base64: true });
-        }
-        zip.generateAsync({ type: 'blob' }).then(content => saveAs(content, `${eventName.replace(/\s/g, '_')}_tickets.zip`));
-    };
-}
-
-function updateAttendeeTable(docs) {
-    const tableBody = document.querySelector('#attendee-table tbody');
-    tableBody.innerHTML = '';
-    docs.forEach(doc => {
-        const data = doc.data();
-        const row = tableBody.insertRow();
-        row.innerHTML = `
-            <td>${data.name}</td>
-            <td><span class="badge badge-${data.checkedIn ? 'success' : 'secondary'}">${data.checkedIn ? 'Checked In' : 'Pending'}</span></td>
-            <td>${data.checkedInTime ? new Date(data.checkedInTime.toDate()).toLocaleString() : 'N/A'}</td>
-            <td>${data.checkedInBy || 'N/A'}</td>
-        `;
-    });
+function showToast(message, type) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = `toast toast-${type}`;
+    toast.style.display = 'block';
+    setTimeout(() => {
+        toast.style.display = 'none';
+    }, 3000);
 }
