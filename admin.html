@@ -43,27 +43,6 @@
                                 <p class="text-muted-foreground">Total Tickets Checked In</p>
                             </div>
                         </div>
-                        <div class="card">
-                            <div class="card-header">
-                                <h2 class="card-title">Event Attendance</h2>
-                            </div>
-                            <div class="card-content">
-                                <div class="table-container">
-                                    <table id="attendee-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Attendee</th>
-                                                <th>Status</th>
-                                                <th>Check-in Time</th>
-                                                <th>Checked In By</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -82,6 +61,24 @@
                                 <div class="form-group">
                                     <label for="attendee-names">Attendee Names (comma-separated)</label>
                                     <textarea id="attendee-names" rows="4" placeholder="e.g., John Doe, Jane Smith, Peter Jones" required></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="instagram-link">Instagram Link (to show on ticket)</label>
+                                    <input type="url" id="instagram-link" placeholder="e.g., https://instagram.com/blueoceantrips">
+                                </div>
+                                <div class="grid grid-cols-2">
+                                    <div class="form-group">
+                                        <label for="company-logo">Company Logo (Optional)</label>
+                                        <input type="file" id="company-logo" accept="image/*">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="sponsor-title">Sponsor Section Title (Optional)</label>
+                                        <input type="text" id="sponsor-title" placeholder="e.g., Our Valued Partners">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="sponsor-logos">Sponsor Logos (Optional, multiple)</label>
+                                    <input type="file" id="sponsor-logos" multiple accept="image/*">
                                 </div>
                                 <button type="submit" class="btn btn-primary">Generate Tickets</button>
                             </form>
@@ -106,7 +103,9 @@
                                 <p class="attendee-name"></p>
                             </div>
                             <div class="ticket-footer">
-                                <p class="contact-info">For more enquiries call or WhatsApp: 08158768689</p>
+                                <h4 class="sponsor-title"></h4>
+                                <div class="sponsor-logos"></div>
+                                <p class="contact-info"></p>
                             </div>
                         </div>
                     </div>
