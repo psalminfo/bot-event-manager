@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <div id="toast"></div>
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="https://res.cloudinary.com/dy2hxcyaf/image/upload/v1758305428/Artboard_1bot_logo_2_zwfw2t.png" alt="Company Logo">
+            </div>
+            <nav class="sidebar-nav">
+                <ul class="nav-list">
+                    <li class="nav-item"><a href="#dashboard" class="nav-link active"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a></li>
+                    <li class="nav-item"><a href="#generator" class="nav-link"><i data-lucide="ticket"></i><span>Ticket Generator</span></a></li>
+                    <li class="nav-item"><a href="#scanner" class="nav-link"><i data-lucide="scan-line"></i><span>QR Scanner</span></a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <div class="main-content">
+            <header class="main-header">
+                <h1 id="page-title">Dashboard</h1>
+            </header>
+            <main>
+                <div id="dashboard" class="page active">
+                    <div class="card-grid">
+                        <div class="card">
+                            <div class="card-content text-center">
+                                <h2 class="text-2xl font-bold" id="total-checkin-count">0</h2>
+                                <p class="text-muted-foreground">Total Tickets Checked In</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Event Attendance</h2>
+                            </div>
+                            <div class="card-content">
+                                <div class="table-container">
+                                    <table id="attendee-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Attendee</th>
+                                                <th>Status</th>
+                                                <th>Check-in Time</th>
+                                                <th>Checked In By</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="generator" class="page">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Generate Tickets</h2>
+                            <p class="card-description">Create digital tickets with embedded QR codes for your attendees.</p>
+                        </div>
+                        <div class="card-content">
+                            <form id="ticket-generator-form">
+                                <div class="form-group">
+                                    <label for="event-name">Event Name</label>
+                                    <input type="text" id="event-name" required placeholder="e.g., BOT Games Hangout">
+                                </div>
+                                <div class="form-group">
+                                    <label for="attendee-names">Attendee Names (comma-separated)</label>
+                                    <textarea id="attendee-names" rows="4" placeholder="e.g., John Doe, Jane Smith, Peter Jones" required></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Generate Tickets</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div id="ticket-output-area" class="mt-8">
+                        <div id="download-btn-container" class="text-center mb-4" style="display: none;">
+                            <button id="download-all-btn" class="btn btn-primary">Download All as ZIP</button>
+                        </div>
+                        <div class="generated-tickets-grid"></div>
+                    </div>
+                    <div id="ticket-template" style="display: none;">
+                        <div class="ticket">
+                            <div class="ticket-header">
+                                <img src="https://res.cloudinary.com/dy2hxcyaf/image/upload/v1758305428/Artboard_1bot_logo_2_zwfw2t.png" alt="Company Logo" class="ticket-logo">
+                            </div>
+                            <div class="ticket-body">
+                                <p class="event-text">EVENT</p>
+                                <h3 class="event-name">BOT GAMES HANGOUT</h3>
+                                <div class="qr-code-container"></div>
+                                <p class="attendee-text">ATTENDEE</p>
+                                <p class="attendee-name"></p>
+                            </div>
+                            <div class="ticket-footer">
+                                <p class="contact-info">For more enquiries call or WhatsApp: 08158768689</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="scanner" class="page">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">QR Scanner</h2>
+                            <p class="card-description">Scan tickets to check in attendees and manage event flow.</p>
+                        </div>
+                        <div class="card-content">
+                            <div id="qr-reader" style="width:100%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script src="firebase-init.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
