@@ -6,77 +6,91 @@
     <title>BlueOceanTrips All-in-One Scanner & Generator</title>
     <style>
         :root {
-            --background: #f8fafc;
-            --foreground: #020817;
-            --primary: #1e293b;
-            --primary-foreground: #f8fafc;
-            --card: #ffffff;
-            --card-foreground: #020817;
-            --muted-foreground: #64748b;
-            --border: #e2e8f0;
-            --destructive: #ef4444;
-            --success: #22c55e;
+            --background: hsl(192, 60%, 95%); /* Light Cyan */
+            --foreground: hsl(222, 47%, 11%);
+            --card: hsl(0, 0%, 100%);
+            --card-foreground: hsl(222, 47%, 11%);
+            --popover: hsl(0, 0%, 100%);
+            --popover-foreground: hsl(222, 47%, 11%);
+            --primary: hsl(197, 71%, 51%); /* Deep Ocean Blue */
+            --primary-foreground: hsl(0, 0%, 100%);
+            --secondary: hsl(210, 40%, 96.1%);
+            --secondary-foreground: hsl(222, 47%, 11%);
+            --muted: hsl(210, 40%, 96.1%);
+            --muted-foreground: hsl(215, 16%, 47%);
+            --accent: hsl(180, 100%, 25%); /* Teal */
+            --accent-foreground: hsl(0, 0%, 100%);
+            --destructive: hsl(0, 84%, 60%);
+            --destructive-foreground: hsl(210, 40%, 98%);
+            --border: hsl(214, 32%, 91%);
+            --input: hsl(214, 32%, 91%);
+            --ring: hsl(197, 71%, 51%);
             --radius: 0.5rem;
-            --input: #e2e8f0;
         }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: 'Poppins', sans-serif;
             background-color: var(--background);
             color: var(--foreground);
             margin: 0;
-            padding: 1rem;
+            padding: 1.5rem;
         }
         .container {
             width: 100%;
-            max-width: 600px;
+            max-width: 640px;
             margin: 0 auto;
         }
         .card {
             background-color: var(--card);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
             margin-bottom: 2rem;
             overflow: hidden;
         }
-        .card-header { padding: 1.5rem; border-bottom: 1px solid var(--border); }
-        .card-header h1 { font-size: 1.5rem; font-weight: 600; margin: 0; color: var(--card-foreground); }
+        .card-header { padding: 1.5rem; border-bottom: 1px solid var(--border); background-color: rgba(0,0,0,0.02); }
+        .card-header h1 { font-family: 'Poppins', sans-serif; font-size: 1.5rem; font-weight: 600; margin: 0; color: var(--card-foreground); }
         .card-header p { margin: 0.25rem 0 0; color: var(--muted-foreground); font-size: 0.875rem; }
         .card-content { padding: 1.5rem; }
-        .form-group { margin-bottom: 1rem; }
+        .form-group { margin-bottom: 1.25rem; }
         .form-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; font-size: 0.875rem; }
         .form-group input, .form-group textarea {
             width: 100%;
-            padding: 0.5rem 0.75rem;
+            padding: 0.75rem;
             border: 1px solid var(--input);
             border-radius: calc(var(--radius) - 2px);
             background-color: var(--background);
-            font-size: 0.875rem;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px var(--ring);
         }
         .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 0.5rem 1rem;
+            padding: 0.75rem 1.5rem;
             border-radius: calc(var(--radius) - 2px);
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
             border: none;
             transition: background-color 0.2s;
+            font-size: 1rem;
         }
         .btn-primary { background-color: var(--primary); color: var(--primary-foreground); width: 100%; }
-        .btn-primary:hover { background-color: #334155; }
-        .btn-secondary { background-color: #e2e8f0; color: var(--primary); }
-        .btn-secondary:hover { background-color: #cbd5e1; }
+        .btn-primary:hover { background-color: hsl(197, 71%, 45%); }
+        .btn-secondary { background-color: var(--accent); color: var(--accent-foreground); }
+        .btn-secondary:hover { background-color: hsl(180, 100%, 20%); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        #qr-reader { width: 100%; border-radius: var(--radius); border: 1px solid var(--border); }
-        #toast { padding: 1rem; margin-top: 1rem; border-radius: var(--radius); text-align: center; font-weight: 500; display: none; }
-        .toast.success { background-color: var(--success); color: white; }
-        .toast.error { background-color: var(--destructive); color: white; }
-        .footer { font-size: 0.75rem; color: var(--muted-foreground); text-align: center; padding: 1rem; border-top: 1px solid var(--border); background-color: #f8fafc; }
-
-        /* Ticket Card Styles */
+        #qr-reader { width: 100%; border-radius: var(--radius); overflow:hidden; }
+        #toast { padding: 1rem; margin-top: 1rem; border-radius: var(--radius); text-align: center; font-weight: 500; display: none; color: white; }
+        .toast.success { background-color: #22c55e; }
+        .toast.error { background-color: #ef4444; }
+        .footer { font-size: 0.875rem; color: var(--muted-foreground); text-align: center; padding: 2rem 1rem; border-top: 1px solid var(--border); }
         #ticket-output-area { margin-top: 2rem; }
         .ticket-card-wrapper { display: flex; justify-content: center; }
         .ticket-card {
@@ -85,22 +99,24 @@
             background-color: white;
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
             padding: 1.5rem;
             display: flex;
             flex-direction: column;
-            font-family: sans-serif;
+            font-family: 'PT Sans', sans-serif;
         }
         .ticket-header { text-align: center; margin-bottom: 1rem; }
-        .ticket-header img { max-width: 120px; margin: 0 auto; }
+        .ticket-header img { max-width: 150px; margin: 0 auto; }
         .ticket-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 1rem;}
-        .ticket-content .label { font-size: 0.75rem; color: var(--muted-foreground); }
-        .ticket-content .event-name { font-size: 1.25rem; font-weight: bold; color: var(--card-foreground); }
-        .ticket-content .qr-image-wrapper { background-color: white; padding: 0.5rem; border-radius: var(--radius); box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); margin: 1rem 0; }
-        .ticket-content .attendee-name { font-size: 1.5rem; font-weight: bold; }
-        .ticket-footer { border-top: 1px dashed var(--border); padding-top: 1rem; text-align: center; font-size: 0.75rem; color: var(--muted-foreground); }
-
+        .ticket-content .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted-foreground); font-family: 'Poppins', sans-serif;}
+        .ticket-content .event-name { font-size: 1.5rem; font-weight: bold; color: var(--card-foreground); font-family: 'Poppins', sans-serif; line-height: 1.2; }
+        .ticket-content .qr-image-wrapper { background-color: white; padding: 0.5rem; border-radius: var(--radius); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin: 1rem 0; }
+        .ticket-content .attendee-name { font-size: 2rem; font-weight: bold; font-family: 'Poppins', sans-serif; line-height: 1.1; }
+        .ticket-footer { border-top: 2px dashed var(--border); padding-top: 1rem; text-align: center; font-size: 0.75rem; color: var(--muted-foreground); }
     </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=PT+Sans:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -121,7 +137,7 @@
                     <input type="text" id="attendee-name" placeholder="e.g., John Doe">
                 </div>
                  <div class="form-group">
-                    <label for="company-logo">Company Logo (Optional)</label>
+                    <label for="company-logo">Company Logo (Optional, overrides default)</label>
                     <input type="file" id="company-logo" accept="image/*">
                 </div>
                 <button id="generate-btn" class="btn btn-primary">Generate Ticket</button>
@@ -149,15 +165,14 @@
                         </div>
                     </div>
                     <div class="ticket-footer">
-                         <p>For more enquiries call or WhatsApp: 08158768689</p>
+                         <p>For enquiries call or WhatsApp: 08158768689</p>
                     </div>
                 </div>
              </div>
-             <div style="text-align: center; margin-top: 1rem;">
+             <div style="text-align: center; margin-top: 1.5rem; display: flex; justify-content: center; gap: 1rem;">
                 <button id="save-btn" class="btn btn-secondary" disabled>Save Ticket as Image</button>
              </div>
         </div>
-
 
         <!-- Scanner Section -->
         <div class="card">
@@ -173,26 +188,20 @@
         </div>
 
         <div class="footer">
-            BlueOceanTrips Event Manager
+            &copy; 2024 BlueOceanTrips Event Manager
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-    
-    <!-- QR Scanner Library -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-
-    <!-- Ticket Generation Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.min.js"></script>
 
     <script>
         // =================================================================================
-        // IMPORTANT: CONFIGURE YOUR FIREBASE KEYS AND STAFF NAME HERE
+        // CONFIGURE YOUR FIREBASE KEYS & STAFF NAME
         // =================================================================================
-        // Your Firebase configuration has been pre-filled.
         const firebaseConfig = {
           "apiKey": "your-api-key",
           "authDomain": "your-auth-domain",
@@ -202,9 +211,7 @@
           "appId": "your-app-id"
         };
 
-        // Set the name of the staff member operating this scanner.
-        // This name will be logged with each scan.
-        const SCANNER_OPERATOR_NAME = "PUT_STAFF_NAME_HERE"; 
+        const SCANNER_OPERATOR_NAME = "STAFF_NAME_HERE"; // IMPORTANT: Change this to the staff member's name
         // =================================================================================
 
         let db;
@@ -235,16 +242,18 @@
                 alert('Please fill in both Event Name and Attendee Name.');
                 return;
             }
-
+            
             const eventId = `${eventName.replace(/\s/g, '')}-${Date.now()}`;
             const attendeeId = `${eventId}-${attendeeName.replace(/\s/g, '')}`;
             
+            // This is the data that will be embedded in the QR code for check-in
             const checkinQrData = JSON.stringify({
                 name: attendeeName,
                 event: eventName,
                 id: attendeeId,
             });
 
+            // Use an API to generate the QR code image
             const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(checkinQrData)}`;
 
             // Update ticket display
@@ -265,12 +274,13 @@
             saveBtn.textContent = 'Saving...';
 
             try {
-                const blob = await htmlToImage.toBlob(ticketNode, { cacheBust: true });
+                // The library needs a DOM node to convert to an image.
+                const blob = await htmlToImage.toBlob(ticketNode, { cacheBust: true, pixelRatio: 2 });
                 if (blob) {
                     saveAs(blob, `${eventName}_${attendeeName}_ticket.png`);
                 }
             } catch (error) {
-                console.error('oops, something went wrong!', error);
+                console.error('Oops, something went wrong!', error);
                 alert('Could not save image. Please try again.');
             } finally {
                 saveBtn.disabled = false;
@@ -296,8 +306,18 @@
 
         async function onScanSuccess(decodedText, decodedResult) {
             try {
-                let data = JSON.parse(decodedText);
-
+                // Attempt to parse the scanned text as JSON
+                let data;
+                try {
+                     data = JSON.parse(decodedText);
+                } catch(e) {
+                     // This happens if the QR code contains a simple string (like a URL)
+                     console.warn('Scanned a non-JSON QR code:', decodedText);
+                     showToast('This is not a valid event ticket.', 'error');
+                     return;
+                }
+               
+                // Check if the parsed data has the fields we expect
                 if (data.name && data.event && data.id) {
                     const attendanceRef = db.collection('attendance').doc(data.id);
                     const doc = await attendanceRef.get();
@@ -317,11 +337,12 @@
                         showToast(`Welcome, ${data.name}! Checked in.`, 'success');
                     }
                 } else {
+                    // The JSON is missing required fields
                     throw new Error('Invalid QR code format for check-in.');
                 }
             } catch (error) {
-                console.warn('Scanned a public QR code or invalid data:', decodedText);
-                showToast('This is not a valid check-in ticket.', 'error');
+                console.error('Scan processing error:', error);
+                showToast('This is not a valid event ticket.', 'error');
             }
         }
 
@@ -330,10 +351,11 @@
             // to avoid spamming the console.
         }
         
+        // --- INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', (event) => {
             const errorMessageDiv = document.getElementById('error-message');
-            if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes("YOUR_API_KEY")) {
-                 errorMessageDiv.innerHTML = 'ERROR: Firebase is not configured. Please edit this HTML file and add your API keys.';
+            if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes("your-api-key")) {
+                 errorMessageDiv.innerHTML = '<strong>ERROR:</strong> Firebase is not configured. Please edit this HTML file and add your API keys.';
                  errorMessageDiv.style.display = 'block';
                  return;
             }
@@ -343,24 +365,28 @@
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.firestore();
             } catch (e) {
-                 errorMessageDiv.innerHTML = `ERROR: Firebase initialization failed. Please check your API keys. Details: ${e.message}`;
+                 errorMessageDiv.innerHTML = `<strong>ERROR:</strong> Firebase initialization failed. Please check your API keys. Details: ${e.message}`;
                  errorMessageDiv.style.display = 'block';
                  return;
             }
 
-
-            if (!SCANNER_OPERATOR_NAME || SCANNER_OPERATOR_NAME === "PUT_STAFF_NAME_HERE") {
+            if (!SCANNER_OPERATOR_NAME || SCANNER_OPERATOR_NAME === "STAFF_NAME_HERE") {
                  showToast('Scanner operator name is not set!', 'error');
             }
 
-            let html5QrcodeScanner = new Html5QrcodeScanner(
-                "qr-reader", 
-                { fps: 10, qrbox: { width: 250, height: 250 } },
-                /* verbose= */ false);
-            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+            // Initialize the QR Code Scanner
+            try {
+                let html5QrcodeScanner = new Html5QrcodeScanner(
+                    "qr-reader", 
+                    { fps: 10, qrbox: { width: 250, height: 250 } },
+                    /* verbose= */ false);
+                html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+            } catch(e) {
+                console.error("Could not start QR Scanner.", e);
+                errorMessageDiv.innerHTML = `<strong>ERROR:</strong> Could not start QR scanner. It may not be supported on this browser or device.`;
+                errorMessageDiv.style.display = 'block';
+            }
         });
-
     </script>
-
 </body>
 </html>
