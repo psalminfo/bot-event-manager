@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlueOceanTrips QR Scanner</title>
+    <style>
+        :root {
+            --background: #f8fafc;
+            --foreground: #020817;
+            --primary: #1e293b;
+            --primary-foreground: #f8fafc;
+            --card: #ffffff;
+            --card-foreground: #020817;
+            --muted-foreground: #64748b;
+            --border: #e2e8f0;
+            --destructive: #ef4444;
+            --success: #22c55e;
+            --radius: 0.5rem;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--background);
+            color: var(--foreground);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 1rem;
+            min-height: 100vh;
+        }
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            overflow: hidden;
+        }
+        .header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+            color: var(--card-foreground);
+        }
+        .header p {
+            margin: 0.25rem 0 0;
+            color: var(--muted-foreground);
+            font-size: 0.875rem;
+        }
+        .content {
+            padding: 1.5rem;
+        }
+        #qr-reader {
+            width: 100%;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+        }
+        #qr-reader-results {
+            margin-top: 1rem;
+            font-size: 0.875rem;
+        }
+        .toast {
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: var(--radius);
+            text-align: center;
+            font-weight: 500;
+            display: none;
+        }
+        .toast.success {
+            background-color: var(--success);
+            color: white;
+        }
+        .toast.error {
+            background-color: var(--destructive);
+            color: white;
+        }
+        .footer {
+            font-size: 0.75rem;
+            color: var(--muted-foreground);
+            text-align: center;
+            padding: 1rem;
+            border-top: 1px solid var(--border);
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>QR Code Scanner</h1>
+            <p>Scan tickets to record attendance.</p>
+        </div>
+        <div class="content">
+            <div id="qr-reader"></div>
+            <div id="toast" class="toast"></div>
+        </div>
+        <div class="footer">
+            BlueOceanTrips Event Manager
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    
+    <!-- QR Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+    <script>
+        // =================================================================================
+        // IMPORTANT: CONFIGURE YOUR FIREBASE KEYS AND STAFF NAME HERE
+        // =================================================================================
+        // Replace the placeholder values below with your actual Firebase project keys.
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY_HERE",
+            authDomain: "YOUR_AUTH_DOMAIN_HERE",
+            projectId: "YOUR_PROJECT_ID_HERE",
+            storageBucket: "YOUR_STORAGE_BUCKET_HERE",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID_HERE",
+            appId: "YOUR_APP_ID_HERE"
+        };
+
+        // Set the name of the staff member operating this scanner.
+        // This name will be logged with each scan.
+        const SCANNER_OPERATOR_NAME = "PUT_STAFF_NAME_HERE"; 
+        // =================================================================================
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        const toastElement = document.getElementById('toast');
+        let toastTimeout;
+
+        function showToast(message, type = 'success') {
+            clearTimeout(toastTimeout);
+            toastElement.textContent = message;
+            toastElement.className = `toast ${type}`;
+            toastElement.style.display = 'block';
+            
+            toastTimeout = setTimeout(() => {
+                toastElement.style.display = 'none';
+            }, 4000);
+        }
+
+        async function onScanSuccess(decodedText, decodedResult) {
+            try {
+                let data = JSON.parse(decodedText);
+
+                if (data.name && data.event && data.id) {
+                    const attendanceRef = db.collection('attendance').doc(data.id);
+                    const doc = await attendanceRef.get();
+
+                    if (doc.exists) {
+                        console.warn(`Already checked in: ${data.name}`);
+                        showToast(`${data.name} has already been scanned.`, 'error');
+                    } else {
+                        await attendanceRef.set({
+                            id: data.id,
+                            attendeeName: data.name,
+                            eventName: data.event,
+                            scannedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            scannedBy: SCANNER_OPERATOR_NAME
+                        });
+                        console.log(`Scan successful for ${data.name}`);
+                        showToast(`Welcome, ${data.name}! Checked in.`, 'success');
+                    }
+                } else {
+                    throw new Error('Invalid QR code format for check-in.');
+                }
+            } catch (error) {
+                console.warn('Scanned a public QR code or invalid data:', decodedText);
+                showToast('This is not a valid check-in ticket.', 'error');
+            }
+        }
+
+        function onScanFailure(error) {
+            // This function is called frequently, so we typically leave it empty
+            // to avoid spamming the console.
+        }
+        
+        document.addEventListener('DOMContentLoaded', (event) => {
+            if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "YOUR_API_KEY_HERE") {
+                 document.getElementById('qr-reader').innerHTML = '<p style="color:red; font-weight:bold; text-align:center;">ERROR: Firebase is not configured. Please edit this HTML file and add your API keys.</p>';
+                 return;
+            }
+
+            if (!SCANNER_OPERATOR_NAME || SCANNER_OPERATOR_NAME === "PUT_STAFF_NAME_HERE") {
+                 showToast('Scanner operator name is not set!', 'error');
+            }
+
+            let html5QrcodeScanner = new Html5QrcodeScanner(
+                "qr-reader", 
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                /* verbose= */ false);
+            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        });
+
+    </script>
+
+</body>
+</html>
